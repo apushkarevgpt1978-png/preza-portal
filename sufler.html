@@ -63,6 +63,7 @@ ul.say li::before{content:"";position:absolute;left:0;top:.62em;
   width:7px;height:7px;border-radius:50%;background:var(--teal)}
 ul.say li em{font-style:normal;color:var(--teal);font-weight:650}
 .pause{margin-top:16px;font-size:15px;color:var(--amber);line-height:1.4}
+.quick{display:none}
 .next{margin-top:22px;padding-top:13px;border-top:1px solid var(--line);
   font-size:14px;color:var(--muted);line-height:1.4}
 .next span{color:var(--ink)}
@@ -89,6 +90,10 @@ pre.req{margin:0;font-family:"Cascadia Mono",Consolas,monospace;font-size:11.5px
   max-height:none}
 .hint{margin-top:11px;font-size:12px;color:var(--muted);line-height:1.4}
 
+/* Нижняя панель — только для телефона. Объявляем ДО медиазапроса:
+   правило без media перебило бы его при равной специфичности. */
+.thumb{display:none}
+
 /* ── лента шагов внизу ── */
 .strip{display:flex;gap:5px;padding:9px 22px;border-top:1px solid var(--line);
   background:var(--surface);flex:none;overflow-x:auto}
@@ -106,8 +111,8 @@ pre.req{margin:0;font-family:"Cascadia Mono",Consolas,monospace;font-size:11.5px
 
 /* ── ТЕЛЕФОН ──────────────────────────────────────────────────────────
    Показ ведётся с телефона в руке: текст крупнее, шапка в два ряда,
-   опора (цифры и реквизиты) убрана под вкладки — иначе она съедает
-   экран, а нужна лишь на двух шагах из десяти. */
+   ключевые цифры идут строкой прямо в тексте, а полная сводка и
+   реквизиты эталонов выезжают снизу по кнопке. */
 @media (max-width:700px){
   .bar{flex-wrap:wrap;gap:9px 12px;padding:9px 14px}
   .clock{font-size:22px}
@@ -124,6 +129,12 @@ pre.req{margin:0;font-family:"Cascadia Mono",Consolas,monospace;font-size:11.5px
   ul.say{gap:13px;margin-top:15px}
   ul.say li{font-size:18px;line-height:1.42}
   .pause{font-size:14px}
+  /* Цифры видны ВСЕГДА: за кнопкой их искать некогда. */
+  .quick{display:flex;flex-wrap:wrap;gap:7px;margin-top:16px}
+  .quick b{font-size:13px;font-weight:650;padding:6px 10px;border-radius:8px;
+    background:var(--surface-2);color:var(--blue);
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  .quick b:nth-child(-n+2){background:rgba(47,211,165,.14);color:var(--teal)}
   .next{font-size:13px;margin-top:18px}
 
   /* опора выезжает снизу по кнопке, поверх текста */
@@ -157,8 +168,6 @@ pre.req{margin:0;font-family:"Cascadia Mono",Consolas,monospace;font-size:11.5px
   body{padding-bottom:0}
   .now{padding-bottom:86px}
 }
-/* на большом экране нижняя панель не нужна */
-.thumb{display:none}
 </style>
 </head>
 <body>
@@ -179,6 +188,10 @@ pre.req{margin:0;font-family:"Cascadia Mono",Consolas,monospace;font-size:11.5px
     <div class="do" id="do"></div>
     <ul class="say" id="say"></ul>
     <div class="pause" id="pause"></div>
+    <div class="quick" id="quick">
+      <b>5:36 → 2:12</b><b>6,3 млн ₽ / сезон</b><b>544 ч на офис</b>
+      <b>2,5 ч в день</b><b>4 человека</b><b>15 000 эталонов</b>
+    </div>
     <div class="next" id="next"></div>
   </div>
 
@@ -214,7 +227,7 @@ pre.req{margin:0;font-family:"Cascadia Mono",Consolas,monospace;font-size:11.5px
 <!-- Панель для телефона: листание большим пальцем, опора по кнопке -->
 <nav class="thumb" id="thumb">
   <button id="tPrev" aria-label="Назад">←</button>
-  <button id="tInfo">Цифры</button>
+  <button id="tInfo">Ещё цифры</button>
   <button id="tRun">Старт</button>
   <button id="tNext" class="wide act" aria-label="Дальше">Дальше →</button>
 </nav>
@@ -643,11 +656,13 @@ $("tInfo").onclick = () => {
   подписьОпоры();
 };
 
-/** Подпись кнопки: что она сделает сейчас, а не что показано. */
+/** Подпись кнопки: что она сделает сейчас, а не что показано.
+    Ключевые цифры теперь в самом тексте (.quick), под кнопкой —
+    полная сводка и реквизиты эталонов. */
 function подписьОпоры(){
   const открыта = document.querySelector(".side").classList.contains("open");
-  $("tInfo").textContent = открыта ? "Скрыть"
-                         : (ШАГИ[шаг].req ? "Реквизиты" : "Цифры");
+  $("tInfo").textContent = открыта ? "Закрыть"
+                         : (ШАГИ[шаг].req ? "Эталоны" : "Ещё цифры");
 }
 
 // смахивание по тексту: влево — дальше, вправо — назад
