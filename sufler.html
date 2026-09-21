@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Суфлёр показа</title>
+<style>
+:root{
+  --paper:#0e1726;--surface:#16213a;--surface-2:#1d2b48;
+  --ink:#eaf1fb;--muted:#8ea3c4;--line:#2a3c5e;
+  --blue:#5b9bff;--cyan:#31c6e8;--teal:#2fd3a5;--amber:#ffc04d;
+  --ff:"Segoe UI Variable Text","Segoe UI",Arial,sans-serif;
+  --ff-d:"Segoe UI Variable Display","Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:var(--ff);background:var(--paper);color:var(--ink);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+
+/* ── верхняя полоса: таймер и прогресс ── */
+.bar{
+  display:flex;align-items:center;gap:18px;
+  padding:10px 22px;border-bottom:1px solid var(--line);
+  background:var(--surface);flex:none;
+}
+.clock{font-family:var(--ff-d);font-size:26px;font-weight:700;
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.clock.over{color:var(--amber)}
+.plan{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.track{flex:1;height:6px;border-radius:99px;background:var(--surface-2);
+  overflow:hidden;position:relative}
+.track i{display:block;height:100%;background:var(--blue);width:0;
+  transition:width .4s ease}
+.track b{position:absolute;top:0;bottom:0;width:2px;background:var(--teal);
+  opacity:.75}
+.step-no{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;
+  white-space:nowrap}
+.btn{border:1px solid var(--line);background:var(--surface-2);color:var(--ink);
+  font:inherit;font-size:12px;padding:5px 11px;border-radius:8px;cursor:pointer}
+.btn:hover{border-color:var(--blue)}
+.btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+/* ── тело: слева ход показа, справа опора ── */
+.main{flex:1;display:grid;grid-template-columns:1fr 372px;min-height:0}
+.now{padding:26px 30px;overflow:auto;min-height:0}
+.side{border-left:1px solid var(--line);background:var(--surface);
+  padding:18px 20px;overflow:auto;min-height:0}
+
+.kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--cyan);font-weight:700}
+h1{font-family:var(--ff-d);font-size:38px;line-height:1.06;margin:9px 0 0;
+  letter-spacing:-.03em;font-weight:700;text-wrap:balance}
+.do{margin-top:14px;padding:11px 15px;border-radius:11px;
+  background:rgba(91,155,255,.11);border-left:3px solid var(--blue);
+  font-size:16px;line-height:1.45}
+.do b{color:var(--blue)}
+ul.say{list-style:none;margin:18px 0 0;padding:0;display:flex;
+  flex-direction:column;gap:11px}
+ul.say li{font-size:19px;line-height:1.4;padding-left:20px;position:relative}
+ul.say li::before{content:"";position:absolute;left:0;top:.62em;
+  width:7px;height:7px;border-radius:50%;background:var(--teal)}
+ul.say li em{font-style:normal;color:var(--teal);font-weight:650}
+.pause{margin-top:16px;font-size:15px;color:var(--amber);line-height:1.4}
+.next{margin-top:22px;padding-top:13px;border-top:1px solid var(--line);
+  font-size:14px;color:var(--muted);line-height:1.4}
+.next span{color:var(--ink)}
+
+/* ── правая колонка ── */
+.card{margin-bottom:15px}
+.card h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 8px;font-weight:700}
+.figs{display:flex;flex-direction:column;gap:7px}
+.fig{display:flex;justify-content:space-between;gap:12px;font-size:14px;
+  padding:6px 9px;border-radius:8px;background:var(--surface-2)}
+.fig b{font-variant-numeric:tabular-nums;color:var(--blue);white-space:nowrap}
+.fig.hot b{color:var(--teal)}
+pre.req{margin:0;font-family:"Cascadia Mono",Consolas,monospace;font-size:11.5px;
+  line-height:1.5;white-space:pre-wrap;color:var(--ink);
+  background:var(--surface-2);padding:11px 12px;border-radius:9px;
+  max-height:none}
+.hint{margin-top:11px;font-size:12px;color:var(--muted);line-height:1.4}
+
+/* ── лента шагов внизу ── */
+.strip{display:flex;gap:5px;padding:9px 22px;border-top:1px solid var(--line);
+  background:var(--surface);flex:none;overflow-x:auto}
+.chip{font-size:11.5px;padding:5px 10px;border-radius:99px;white-space:nowrap;
+  background:var(--surface-2);color:var(--muted);cursor:pointer;border:1px solid transparent}
+.chip.on{background:var(--blue);color:#fff;font-weight:650}
+.chip.done{color:var(--teal)}
+.chip:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+@media (max-width:1100px){
+  .main{grid-template-columns:1fr}
+  .side{border-left:0;border-top:1px solid var(--line)}
+  h1{font-size:30px}
+}
+
+/* ── ТЕЛЕФОН ──────────────────────────────────────────────────────────
+   Показ ведётся с телефона в руке: текст крупнее, шапка в два ряда,
+   опора (цифры и реквизиты) убрана под вкладки — иначе она съедает
+   экран, а нужна лишь на двух шагах из десяти. */
+@media (max-width:700px){
+  .bar{flex-wrap:wrap;gap:9px 12px;padding:9px 14px}
+  .clock{font-size:22px}
+  .plan{font-size:12px;order:3;flex-basis:100%}
+  .track{order:4;flex-basis:100%}
+  .step-no{margin-left:auto;font-size:12px}
+  .btn{padding:7px 13px;font-size:13px}
+
+  .main{grid-template-columns:1fr;position:relative}
+  .now{padding:18px 16px 14px}
+  h1{font-size:26px;line-height:1.1}
+  .kicker{font-size:11px}
+  .do{font-size:15px;padding:10px 13px;margin-top:12px}
+  ul.say{gap:13px;margin-top:15px}
+  ul.say li{font-size:18px;line-height:1.42}
+  .pause{font-size:14px}
+  .next{font-size:13px;margin-top:18px}
+
+  /* опора выезжает снизу по кнопке, поверх текста */
+  .side{
+    position:fixed;left:0;right:0;bottom:0;top:auto;z-index:20;
+    max-height:74vh;border-top:1px solid var(--line);
+    border-radius:16px 16px 0 0;padding:14px 16px 78px;
+    box-shadow:0 -18px 44px rgba(0,0,0,.45);
+    transform:translateY(102%);transition:transform .26s ease;
+    -webkit-overflow-scrolling:touch;
+  }
+  .side.open{transform:translateY(0)}
+  .fig{font-size:15px;padding:8px 11px}
+  pre.req{font-size:13px;line-height:1.55}
+
+  /* нижняя панель: листание большим пальцем */
+  .strip{display:none}
+  .thumb{
+    display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;
+    gap:8px;padding:9px 12px calc(9px + env(safe-area-inset-bottom));
+    background:var(--surface);border-top:1px solid var(--line);
+  }
+  .thumb button{
+    flex:1;font:inherit;font-size:15px;font-weight:650;padding:13px 8px;
+    border-radius:11px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--ink);
+  }
+  .thumb button.wide{flex:1.5}
+  .thumb button.act{background:var(--blue);border-color:var(--blue);color:#fff}
+  .thumb button:disabled{opacity:.35}
+  body{padding-bottom:0}
+  .now{padding-bottom:86px}
+}
+/* на большом экране нижняя панель не нужна */
+.thumb{display:none}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="clock" id="clock">00:00</div>
+  <div class="plan" id="plan">план 0:00 · шаг 0:00</div>
+  <div class="track"><i id="fill"></i><b id="mark" style="left:0"></b></div>
+  <div class="step-no" id="stepno">1 / 10</div>
+  <button class="btn" id="run">Старт</button>
+  <button class="btn" id="reset">Сброс</button>
+</div>
+
+<div class="main">
+  <div class="now">
+    <div class="kicker" id="kicker"></div>
+    <h1 id="title"></h1>
+    <div class="do" id="do"></div>
+    <ul class="say" id="say"></ul>
+    <div class="pause" id="pause"></div>
+    <div class="next" id="next"></div>
+  </div>
+
+  <aside class="side">
+    <div class="card">
+      <h2>Цифры под рукой</h2>
+      <div class="figs">
+        <div class="fig hot"><span>Один расчёт</span><b>5:36 → 2:12</b></div>
+        <div class="fig hot"><span>Экономия за сезон</span><b>6,3 млн ₽</b></div>
+        <div class="fig"><span>На офис за сезон</span><b>544 часа</b></div>
+        <div class="fig"><span>В день на офис</span><b>2,5 часа</b></div>
+        <div class="fig"><span>По компании</span><b>7 101 час</b></div>
+        <div class="fig"><span>Это людей на сезон</span><b>4 человека</b></div>
+        <div class="fig"><span>Расчётов за год</span><b>125 000</b></div>
+        <div class="fig"><span>Из них в офисах</span><b>86 220</b></div>
+        <div class="fig"><span>Движок</span><b>12 сек → 0,5</b></div>
+        <div class="fig"><span>Эталонов сверено</span><b>15 000</b></div>
+        <div class="fig"><span>Сходимость с 1С</span><b>99,7–100%</b></div>
+        <div class="fig"><span>Подписки сейчас</span><b>2,9 млн ₽/год</b></div>
+      </div>
+    </div>
+    <div class="card" id="reqcard">
+      <h2>Что вводить в 1С</h2>
+      <pre class="req" id="req"></pre>
+      <div class="hint" id="reqhint"></div>
+    </div>
+  </aside>
+</div>
+
+<div class="strip" id="strip"></div>
+
+<!-- Панель для телефона: листание большим пальцем, опора по кнопке -->
+<nav class="thumb" id="thumb">
+  <button id="tPrev" aria-label="Назад">←</button>
+  <button id="tInfo">Цифры</button>
+  <button id="tRun">Старт</button>
+  <button id="tNext" class="wide act" aria-label="Дальше">Дальше →</button>
+</nav>
+
+<script>
+// ── Сценарий показа. Правится здесь, ничего больше трогать не нужно. ─────
+const ЭТАЛОН_ПРОФЛИСТ =
+`ПР-819/СБ-26   Профлист   76,6 м
+
+ТипЗабора            Профлист
+ДлинаЗабора          76,6
+ВысотаЗабора         2
+ЗаборЦвет            Двусторонний
+Покраска             DALI
+ВариантУстановки     Стандарт
+
+Ворота               3
+Калитка1ст           1   замок Да, рамка Да
+Калитка2ст           1   замок Да, рамка Да
+ОткатныеВорота       4   автоматика Да
+ВидЗамка             Апекс
+
+КирпСтолбыВорота          3
+КирпСтолбыКалитка1Ст      1
+КирпСтолбыКалитка2Ст      1
+КирпСтолбыОткатныеВорота  3
+
+Навес   6 × 4, h 2,1, арочный
+        поликарбонат бронза, столбы 80
+
+ПротяжкаЛаги         2
+Скидки               7 / 7 / 7 / 7`;
+
+const ЭТАЛОН_ШТАКЕТНИК =
+`ПР-2893/О-26   Штакетник Горизонт   112 м
+
+ТипЗабора            ШтакетникГоризонт
+ДлинаЗабора          112
+ВысотаЗабора         2
+ЗаборЦвет            Односторонний
+Покраска             DALI
+Зазор                6
+Шахматка             Да
+ВидРасчета           Finfold
+
+Ворота               3
+Калитка1ст           1   замок Да
+Калитка2ст           1   замок Да
+ОткатныеВорота       4   автоматика Да
+
+Кирпичные столбы     3 / 1 / 1 / 3
+Навес                6 × 4, арочный
+Доставка             6 300
+СкидкаСтандартМ      13`;
+
+const ЭТАЛОН_ЖАЛЮЗИ =
+`ПР-2297/СБ-26   Жалюзи Лофт   100 м
+
+ТипЗабора            ЖалюзиЛофт
+ДлинаЗабора          100
+ВысотаЗабора         2
+Покраска             DALI
+ВариантУстановки     БутированиеТРЕНД
+
+Ворота               3
+Калитка1ст           1   замок Да
+Калитка2ст           1   замок Да
+ОткатныеВорота       3
+
+Кирпичные столбы     3 / 1 / 1 / 3
+Навес                6 × 4, арочный
+Скидки               10 / 10`;
+
+const ШАГИ = [
+  {
+    мин: 2, метка: "Слайд 1",
+    kicker: "Слайд 1 · pitch-2-slides.html",
+    title: "Одна работа. Слишком много окон.",
+    do: "Открыть <b>pitch-2-slides.html</b>, слайд 1. Портал и 1С — держать открытыми в соседних вкладках.",
+    say: [
+      "Где сейчас живёт работа менеджера: Битрикс, Ваззап, Живосайт, телефония, 1С, гугл-таблицы, сайт УЦ.",
+      "Весь день — переключения и перенос данных руками.",
+      "Одна цель: <em>всё в одном месте</em>. Не ещё одна система, а замена.",
+      "Сегодня показываю два раздела подробно — расчёт и чат. Остальное — обзорно."
+    ],
+    next: "Переходим в 1С. Считаем при вас."
+  },
+  {
+    мин: 3, метка: "1С: считаем",
+    kicker: "Живой показ · 1С",
+    title: "Считаем в 1С. Засекаем.",
+    do: "Открыть 1С → Предварительный расчёт. <b>Вводить реквизиты из правой колонки.</b> Нажать «Рассчитать» и <b>молчать</b>, пока считает.",
+    say: [
+      "Это обычный расчёт, который менеджер делает десятки раз в день.",
+      "Забор 76 метров, ворота, две калитки, откатные с автоматикой, кирпичные столбы, навес.",
+      "Смотрим на время."
+    ],
+    pause: "⏸ Пауза, пока 1С считает. Не заполнять её словами — двенадцать секунд должны ощущаться.",
+    req: ЭТАЛОН_ПРОФЛИСТ,
+    reqhint: "Реальный расчёт из базы. 24 элемента конструкции.",
+    next: "Тот же расчёт в портале."
+  },
+  {
+    мин: 3, метка: "Портал: расчёт",
+    kicker: "Живой показ · Портал",
+    title: "То же самое в портале.",
+    do: "Портал → Калькулятор → те же реквизиты → «Рассчитать».",
+    say: [
+      "Те же данные. <em>Доли секунды.</em>",
+      "И сразу четыре комплектации — Эконом, Стандарт, Стандарт М, Премиум. В 1С каждая считалась отдельным заходом.",
+      "Движок перенесён из 1С: те же правила, те же цены, те же округления.",
+      "Сверено <em>15 000 эталонных расчётов</em>. Сходимость 99,7–100%."
+    ],
+    pause: "Сверить суммы с 1С вслух: цифры должны совпасть.",
+    req: ЭТАЛОН_ПРОФЛИСТ,
+    reqhint: "Те же реквизиты, что вводили в 1С.",
+    next: "Ещё два типа — быстро."
+  },
+  {
+    мин: 2, метка: "Ещё 2 эталона",
+    kicker: "Живой показ · Портал",
+    title: "Не только профлист.",
+    do: "Посчитать штакетник и жалюзи. <b>Быстро</b>, без пауз — это подтверждение, а не новый номер.",
+    say: [
+      "Штакетник горизонт, 112 метров, шахматка.",
+      "Жалюзи Лофт, 100 метров, бутирование.",
+      "Сложность на скорости не сказывается вообще."
+    ],
+    req: ЭТАЛОН_ШТАКЕТНИК + "\n\n" + "─".repeat(34) + "\n\n" + ЭТАЛОН_ЖАЛЮЗИ,
+    reqhint: "Два расчёта подряд, по одному вводу на каждый.",
+    next: "Чат-офис — главный раздел."
+  },
+  {
+    мин: 5, метка: "Чат-офис",
+    kicker: "Живой показ · Чат с клиентами",
+    title: "Шесть каналов. Одно окно.",
+    do: "Портал → Чат с клиентами. Показать: список слева, переписку в центре, карточку справа. <b>Открыть диалог, где есть звонок.</b>",
+    say: [
+      "MAX, Telegram, WhatsApp, SMS, почта и чат нашего сайта — в одном окне.",
+      "Подключены <em>официально</em>, через боты самих мессенджеров. Не через посредника, который завтра поднимет цену.",
+      "В той же ленте — <em>звонки</em>. Запись можно послушать, рядом расшифровка текстом.",
+      "Справа карточка: заказы, расчёты, выезды, заметки. Не ссылка в 1С, а сами данные.",
+      "Рядом внутренний чат — вместо Битрикса и групп в MAX."
+    ],
+    next: "Отправляем клиенту расчёт, который только что посчитали."
+  },
+  {
+    мин: 3, метка: "Отправка",
+    kicker: "Живой показ · Связка",
+    title: "Расчёт уходит клиенту при нём.",
+    do: "В карточке клиента — плитки расчётов. <b>Перетащить расчёт в поле набора</b> → в списке вложений появятся листы → отправить.",
+    say: [
+      "Менеджер не ищет файл и не печатает. Расчёт уже сохранён и лежит в карточке.",
+      "Четыре комплектации — четыре листа. Лишние убираются крестиком.",
+      "Клиент получает цену, <em>пока ещё на линии</em>.",
+      "Раньше — пять минут, а чаще «отправлю вечером». За это время он обзванивал конкурентов."
+    ],
+    pause: "Здесь назвать цифры: 5:36 → 2:12 на расчёт. 544 часа на офис за сезон. 6,3 млн по компании.",
+    next: "Гена на сайте — считает без менеджера."
+  },
+  {
+    мин: 3, метка: "Гена на сайте",
+    kicker: "Живой показ · Гена",
+    title: "Клиент получает расчёт ночью.",
+    do: "Открыть чат на сайте. Спросить как клиент: длина, высота, материал — довести до расчёта.",
+    say: [
+      "Гена собирает параметры и считает <em>тем же движком</em>, что менеджер.",
+      "Проверяет выполнимость: попросят ворота 4,8 — честно скажет, что таких нет.",
+      "Четыре варианта в чат за секунды. Ночью, в выходной, в пик сезона — одинаково.",
+      "Это расчёты, которых <em>раньше не было вовсе</em>: клиент уходил без цифры.",
+      "И эти обращения больше не в Живосайте — переписка падает в тот же чат-офис."
+    ],
+    next: "Эскиз — рисунок становится данными."
+  },
+  {
+    мин: 2, метка: "Эскиз",
+    kicker: "Живой показ · Эскиз",
+    title: "Нарисовал — рассчитал.",
+    do: "Открыть эскиз, начертить пару сторон, нажать «Рассчитать».",
+    say: [
+      "Замер рисуется в портале: стороны, длины, ворота, перепады.",
+      "Кнопка «Рассчитать» — сторона уезжает в калькулятор со всеми реквизитами.",
+      "Главное: эскиз перестал быть картинкой. Это <em>данные</em>.",
+      "Картинку проверить нельзя. Цифру — можно: сходится ли метраж, на месте ли ворота, хватает ли столбов.",
+      "Ошибки в схемах сейчас находим на монтаже, когда платить поздно."
+    ],
+    next: "Остальные разделы — бегло."
+  },
+  {
+    мин: 4, метка: "Остальное",
+    kicker: "Обзорно · 5 разделов",
+    title: "Что ещё есть в портале.",
+    do: "Пройти по разделам <b>быстро</b>, по одному предложению. Не углубляться.",
+    say: [
+      "<em>Вход</em> — по телефону, код в MAX. Штат и роли из 1С, учётки не заводим.",
+      "<em>Лента</em> — новости компании. Первое, ради чего держим Битрикс.",
+      "<em>Мой день</em> — задачник, который заполняется сам: Гена достаёт следующий шаг из разбора звонков.",
+      "<em>Документы</em> — вместо гугл-таблиц. Видно, кто правил; доступ по должности; связь с 1С.",
+      "<em>Аналитика и хранилище</em> — дашборды без выгрузок, файлы в одном месте."
+    ],
+    next: "Финальный слайд."
+  },
+  {
+    мин: 3, метка: "Слайд 2",
+    kicker: "Слайд 2 · pitch-2-slides.html",
+    title: "Не просим поверить. Предлагаем измерить.",
+    do: "Переключиться на <b>слайд 2</b>. Дальше — вопросы.",
+    say: [
+      "Закрывается шесть систем: Битрикс, Ваззап, Живосайт, сайт УЦ, гугл-таблицы, чужие диски.",
+      "Подписки сегодня — <em>2,9 млн в год</em>. Экономия времени на расчётах — <em>6,3 млн за сезон</em>.",
+      "Что нужно от людей: звать клиента в наш мессенджер, не писать с личных телефонов, считать и рисовать в портале.",
+      "Ничего из этого не требует денег. Требует решения — одного для всех.",
+      "Предлагаю пилот в Щёлково: запускаем, измеряем, решаем. Сервисы отключаем только после результата."
+    ],
+    next: "Вопросы."
+  }
+];
+
+// ── Механика ────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const ПЛАН = ШАГИ.reduce((s, ш) => s + ш.мин, 0) * 60;
+let шаг = 0, идут = false, секунды = 0, началоШага = 0, таймер = null;
+
+const мм = с => `${Math.floor(с/60)}:${String(Math.floor(с%60)).padStart(2,"0")}`;
+
+function нарисоватьЛенту(){
+  $("strip").innerHTML = "";
+  ШАГИ.forEach((ш, i) => {
+    const b = document.createElement("button");
+    b.className = "chip" + (i === шаг ? " on" : i < шаг ? " done" : "");
+    b.textContent = `${i+1}. ${ш.метка} · ${ш.мин}м`;
+    b.onclick = () => { шаг = i; началоШага = секунды; показать(); };
+    $("strip").appendChild(b);
+  });
+}
+
+function показать(){
+  const ш = ШАГИ[шаг];
+  $("kicker").textContent = ш.kicker;
+  $("title").textContent = ш.title;
+  $("do").innerHTML = ш.do;
+  $("say").innerHTML = ш.say.map(с => `<li>${с}</li>`).join("");
+  $("pause").innerHTML = ш.pause || "";
+  $("next").innerHTML = ш.next ? `Дальше: <span>${ш.next}</span>` : "";
+  $("stepno").textContent = `${шаг+1} / ${ШАГИ.length}`;
+
+  // реквизиты показываем только там, где они нужны
+  $("reqcard").style.display = ш.req ? "" : "none";
+  if (ш.req){ $("req").textContent = ш.req; $("reqhint").textContent = ш.reqhint || ""; }
+
+  // отметка плановой границы шага на шкале
+  const донего = ШАГИ.slice(0, шаг+1).reduce((s,x)=>s+x.мин,0)*60;
+  $("mark").style.left = (донего/ПЛАН*100) + "%";
+
+  // на телефоне: гасим стрелки по краям. Кнопку «Цифры» НЕ прячем —
+  // сводка нужна на любом шаге, реквизиты просто добавляются где есть.
+  $("tPrev").disabled = (шаг === 0);
+  $("tNext").disabled = (шаг === ШАГИ.length-1);
+  подписьОпоры();
+
+  нарисоватьЛенту();
+  сохранить();
+}
+
+function тик(){
+  if (!идут) return;
+  секунды++;
+  $("clock").textContent = мм(секунды);
+  $("clock").classList.toggle("over", секунды > ПЛАН);
+  $("fill").style.width = Math.min(секунды/ПЛАН*100, 100) + "%";
+  $("plan").textContent =
+    `план ${мм(ПЛАН)} · шаг ${мм(секунды - началоШага)} из ${ШАГИ[шаг].мин}:00`;
+  сохранить();
+}
+
+function пуск(){
+  идут = !идут;
+  $("run").textContent = идут ? "Пауза" : "Старт";
+  if (идут && !таймер) таймер = setInterval(тик, 1000);
+}
+
+function сброс(){
+  идут = false; секунды = 0; шаг = 0; началоШага = 0;
+  $("run").textContent = "Старт";
+  $("clock").textContent = "00:00";
+  $("clock").classList.remove("over");
+  $("fill").style.width = "0";
+  $("plan").textContent = `план ${мм(ПЛАН)} · шаг 0:00`;
+  показать();
+}
+
+// перелистывание: пробел / стрелки
+addEventListener("keydown", e => {
+  if (e.target.tagName === "BUTTON" && e.code === "Space") return;
+  if (e.code === "Space" || e.code === "ArrowRight" || e.code === "PageDown"){
+    e.preventDefault();
+    if (шаг < ШАГИ.length-1){ шаг++; началоШага = секунды; показать(); }
+  } else if (e.code === "ArrowLeft" || e.code === "PageUp"){
+    e.preventDefault();
+    if (шаг > 0){ шаг--; началоШага = секунды; показать(); }
+  } else if (e.code === "Enter"){
+    e.preventDefault(); пуск();
+  }
+});
+
+$("run").onclick = пуск;
+$("reset").onclick = сброс;
+
+// ── Телефон: кнопки под большим пальцем ─────────────────────────────────
+function вперёд(){ if (шаг < ШАГИ.length-1){ шаг++; началоШага = секунды; показать(); } }
+function назад(){ if (шаг > 0){ шаг--; началоШага = секунды; показать(); } }
+
+$("tNext").onclick = вперёд;
+$("tPrev").onclick = назад;
+$("tRun").onclick  = () => { пуск(); $("tRun").textContent = идут ? "Пауза" : "Старт"; };
+$("tInfo").onclick = () => {
+  document.querySelector(".side").classList.toggle("open");
+  подписьОпоры();
+};
+
+/** Подпись кнопки: что она сделает сейчас, а не что показано. */
+function подписьОпоры(){
+  const открыта = document.querySelector(".side").classList.contains("open");
+  $("tInfo").textContent = открыта ? "Скрыть"
+                         : (ШАГИ[шаг].req ? "Реквизиты" : "Цифры");
+}
+
+// смахивание по тексту: влево — дальше, вправо — назад
+(function(){
+  let x0 = null, y0 = null;
+  const зона = document.querySelector(".now");
+  зона.addEventListener("touchstart", e => {
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
+  }, {passive:true});
+  зона.addEventListener("touchend", e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    const dy = e.changedTouches[0].clientY - y0;
+    // горизонтальное и заметное — иначе это прокрутка
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)*1.6){
+      dx < 0 ? вперёд() : назад();
+    }
+    x0 = y0 = null;
+  }, {passive:true});
+})();
+
+// ── Не потерять место, если браузер закроется посреди показа ────────────
+function сохранить(){
+  try{
+    localStorage.setItem("sufler", JSON.stringify({шаг, секунды, началоШага}));
+  }catch(e){}
+}
+try{
+  const с = JSON.parse(localStorage.getItem("sufler") || "null");
+  if (с && typeof с.шаг === "number"){
+    шаг = Math.min(с.шаг, ШАГИ.length-1);
+    секунды = с.секунды || 0; началоШага = с.началоШага || 0;
+    $("clock").textContent = мм(секунды);
+    $("fill").style.width = Math.min(секунды/ПЛАН*100, 100) + "%";
+  }
+}catch(e){}
+
+$("plan").textContent = `план ${мм(ПЛАН)} · шаг ${мм(секунды-началоШага)}`;
+показать();
+</script>
+</body>
+</html>
