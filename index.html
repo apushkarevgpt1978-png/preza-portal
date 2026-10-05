@@ -1,69 +1,605 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow">
-<title>Показ портала</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Техкарта монтажника</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap">
 <style>
-:root{
-  --paper:#0e1726;--surface:#16213a;--surface-2:#1d2b48;
-  --ink:#eaf1fb;--muted:#8ea3c4;--line:#2a3c5e;
-  --blue:#5b9bff;--teal:#2fd3a5;
-  --ff:"Segoe UI Variable Text","Segoe UI",Arial,sans-serif;
-  --ff-d:"Segoe UI Variable Display","Segoe UI",Arial,sans-serif;
-}
-*{box-sizing:border-box}
-body{
-  margin:0;min-height:100vh;font-family:var(--ff);
-  background:var(--paper);color:var(--ink);
-  display:flex;align-items:center;justify-content:center;padding:24px 16px;
-}
-main{width:100%;max-width:520px}
-.kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--teal);font-weight:700}
-h1{font-family:var(--ff-d);font-size:34px;line-height:1.08;margin:10px 0 6px;
-  letter-spacing:-.03em;font-weight:700;text-wrap:balance}
-p.lead{margin:0 0 26px;color:var(--muted);font-size:15px;line-height:1.5}
-.links{display:flex;flex-direction:column;gap:12px}
-a.card{
-  display:block;text-decoration:none;color:inherit;
-  padding:18px 20px;border-radius:14px;border:1px solid var(--line);
-  background:var(--surface);transition:border-color .18s,transform .18s;
-}
-a.card:hover,a.card:focus-visible{border-color:var(--blue);transform:translateY(-1px)}
-a.card:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
-a.card b{display:block;font-size:19px;font-weight:650;margin-bottom:4px}
-a.card span{font-size:14px;color:var(--muted);line-height:1.45}
-a.card.main{border-color:var(--blue);background:var(--surface-2)}
-a.card.main b{color:var(--blue)}
-.note{margin-top:24px;font-size:13px;color:var(--muted);line-height:1.5}
-.note code{background:var(--surface-2);padding:2px 6px;border-radius:5px;
-  font-family:"Cascadia Mono",Consolas,monospace;font-size:12px}
+  /* Только светлая тема: экран читают на улице, на солнце нужен максимальный контраст. */
+  :root {
+    --brand: #1B3A6B; --brand-tint: #EAF0F8; --brand-line: #C6D5EA;
+    --bg: #F4F6FA; --surface: #FFFFFF; --line: #DCE2EA;
+    --text: #141C2B; --heading: #0F1A2E; --muted: #5B6578; --faint: #8E98A9;
+    --ok: #1F8A4C; --ok-tint: #E4F4EA; --bad: #C93434; --bad-tint: #FBE9E9; --todo: #B86E00; --todo-tint: #FFF3DF;
+    --c: var(--brand);
+    --r: 14px; --fs: 17px;
+    --ff-display: 'Manrope', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --ff-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --bar: 72px;
+  }
+  :root[data-size="l"] { --fs: 20px; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--text); font: var(--fs)/1.45 var(--ff-body); -webkit-tap-highlight-color: transparent; }
+  h1, h2, h3 { font-family: var(--ff-display); color: var(--heading); letter-spacing: -.01em; margin: 0; }
+  button { font: inherit; color: inherit; }
+  .app { max-width: 520px; margin: 0 auto; min-height: 100vh; padding-bottom: calc(var(--bar) + env(safe-area-inset-bottom) + 12px); }
+
+  /* цвета разделов */
+  [data-c="docs"]     { --c: #2B63C6; }
+  [data-c="clients"]  { --c: #7A4DC4; }
+  [data-c="contacts"] { --c: #0F8A84; }
+  [data-c="faq"]      { --c: #4A5568; }
+  [data-c="conflict"] { --c: #C93434; }
+  [data-c="ostatki"]  { --c: #B5720C; }
+  [data-c="install"]  { --c: #D35A12; }
+  [data-c="after"]    { --c: #1F8A4C; }
+  .tint { background: color-mix(in srgb, var(--c) 13%, #fff); color: var(--c); }
+
+  /* шапка */
+  .top { position: sticky; top: 0; z-index: 5; background: var(--surface); border-bottom: 4px solid var(--c); padding: 10px 16px; display: flex; align-items: center; gap: 12px; min-height: 64px; }
+  .top .ic { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; flex: none; }
+  .top h1 { font-size: 1.15em; line-height: 1.2; flex: 1; }
+  .chip { border: 1.5px solid var(--brand-line); background: transparent; border-radius: 12px; min-width: 52px; height: 44px; padding: 0 10px; font-weight: 700; color: var(--brand); cursor: pointer; flex: none; }
+  .chip:active { background: var(--brand-tint); }
+
+  main { padding: 14px 16px 0; }
+
+  /* поиск */
+  .search { width: 100%; height: 54px; padding: 0 16px; border-radius: var(--r); border: 2px solid var(--line); background: var(--surface); color: var(--text); font: inherit; margin-bottom: 14px; }
+  .search:focus { outline: none; border-color: var(--brand); }
+
+  /* большие кнопки разделов — во всю ширину */
+  .list { display: flex; flex-direction: column; gap: 12px; }
+  .big { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 76px; padding: 12px 14px; text-align: left; cursor: pointer;
+         background: var(--surface); border: 2px solid var(--line); border-left: 8px solid var(--c); border-radius: var(--r); }
+  .big:active { transform: scale(.99); background: color-mix(in srgb, var(--c) 7%, #fff); }
+  .big .ic { width: 50px; height: 50px; border-radius: 13px; display: grid; place-items: center; flex: none; }
+  .big .tx { flex: 1; min-width: 0; }
+  .big b { display: block; font-family: var(--ff-display); font-size: 1.05em; color: var(--heading); line-height: 1.2; }
+  .big small { display: block; color: var(--muted); font-size: .8em; line-height: 1.3; margin-top: 3px; }
+  .big .chev { color: var(--faint); flex: none; }
+
+  /* слайд-шаг */
+  .counter { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; color: var(--muted); font-weight: 600; font-size: .85em; }
+  .dots { display: flex; gap: 6px; }
+  .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+  .dots i.on { background: var(--c); }
+  .visual { background: var(--surface); border: 2px solid var(--line); border-radius: var(--r); padding: 10px; margin-bottom: 14px; }
+  .visual svg { width: 100%; height: auto; display: block; }
+  .ph { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 170px; text-align: center;
+        color: var(--todo); background: var(--todo-tint); border-radius: 10px; padding: 14px; font-size: .85em; font-weight: 600; }
+  .gb { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .gb > div { border-radius: 10px; padding: 6px; text-align: center; font-weight: 700; font-size: .9em; }
+  .gb .g { background: var(--ok-tint); color: var(--ok); } .gb .b { background: var(--bad-tint); color: var(--bad); }
+  .cmd { font-size: 1.35em; line-height: 1.25; margin-bottom: 12px; }
+  .norm { display: inline-block; font-weight: 700; padding: 6px 12px; border-radius: 10px; margin-bottom: 12px; background: var(--brand-tint); color: var(--brand); }
+  .row { display: flex; gap: 10px; margin-bottom: 12px; }
+  .act { flex: 1; height: 56px; border-radius: var(--r); border: 2px solid var(--brand-line); background: var(--surface); color: var(--brand); font-weight: 700; cursor: pointer;
+         display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .act:active { background: var(--brand-tint); }
+  .more { background: var(--surface); border: 2px solid var(--line); border-radius: var(--r); }
+  .more summary { padding: 14px 16px; font-weight: 700; cursor: pointer; list-style: none; color: var(--brand); }
+  .more summary::-webkit-details-marker { display: none; }
+  .more summary::after { content: " ▾"; } .more[open] summary::after { content: " ▴"; }
+  .more div { padding: 0 16px 14px; }
+  .stepnav { position: sticky; bottom: calc(var(--bar) + env(safe-area-inset-bottom) + 8px); display: flex; gap: 10px; margin-top: 16px; }
+  .nav { flex: 1; height: 64px; border-radius: var(--r); font-weight: 800; font-size: 1.05em; cursor: pointer; border: 2px solid var(--c); background: var(--surface); color: var(--c); }
+  .nav.main { background: color-mix(in srgb, var(--c) 14%, #fff); }
+  .nav:disabled { opacity: .35; }
+
+  /* список шагов (режим «Списком») */
+  .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .steps li { background: var(--surface); border: 2px solid var(--line); border-radius: var(--r); padding: 14px; display: flex; gap: 12px; cursor: pointer; }
+  .steps .n { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; flex: none; }
+  .steps b { display: block; color: var(--heading); }
+  .steps small { display: block; color: var(--muted); font-size: .82em; margin-top: 2px; }
+
+  /* тексты, вопросы, контакты */
+  .card { background: var(--surface); border: 2px solid var(--line); border-radius: var(--r); padding: 14px 16px; margin-bottom: 12px; }
+  .card h3 { font-size: 1.02em; margin-bottom: 6px; }
+  .card ul { margin: 4px 0 0; padding-left: 20px; } .card li { margin: 4px 0; }
+  details.faq { background: var(--surface); border: 2px solid var(--line); border-radius: var(--r); margin-bottom: 10px; }
+  details.faq summary { cursor: pointer; padding: 16px; font-weight: 700; color: var(--heading); list-style: none; display: flex; justify-content: space-between; gap: 10px; }
+  details.faq summary::-webkit-details-marker { display: none; }
+  details.faq summary::after { content: "+"; color: var(--c); font-weight: 800; font-size: 1.2em; line-height: 1; }
+  details.faq[open] summary::after { content: "−"; }
+  details.faq > div { padding: 0 16px 16px; }
+  .contact b { display: block; font-family: var(--ff-display); font-size: 1.05em; }
+  .contact small { display: block; color: var(--muted); font-size: .82em; margin: 2px 0 10px; }
+  .call { display: flex; align-items: center; justify-content: center; gap: 10px; height: 58px; border-radius: var(--r); border: 2px solid var(--ok); background: var(--ok-tint); color: var(--ok);
+          font-weight: 800; text-decoration: none; }
+  .call.none { border-color: var(--todo); background: var(--todo-tint); color: var(--todo); }
+  .todo { color: var(--todo); font-weight: 700; }
+
+  /* блок для заказчика */
+  .client-note { margin-top: 18px; background: var(--todo-tint); border: 2px solid var(--todo); border-radius: var(--r); }
+  .client-note summary { padding: 14px 16px; font-weight: 800; color: var(--todo); cursor: pointer; list-style: none; }
+  .client-note summary::-webkit-details-marker { display: none; }
+  .client-note div { padding: 0 16px 14px; font-size: .9em; }
+  .client-note li { margin: 4px 0; }
+
+  /* нижняя панель */
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--surface); border-top: 1px solid var(--line);
+         padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); }
+  .bar-in { max-width: 520px; margin: 0 auto; display: flex; gap: 8px; height: calc(var(--bar) - 16px); }
+  .bar button, .bar a { flex: 1; border-radius: var(--r); border: 2px solid var(--brand-line); background: var(--surface); color: var(--brand); font-weight: 700; font-size: .85em;
+                        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; text-decoration: none; }
+  .bar .callbtn { flex: 1.4; border-color: var(--ok); background: var(--ok-tint); color: var(--ok); }
+  .bar button:disabled { opacity: .35; }
+  .empty { color: var(--muted); text-align: center; padding: 24px 0; }
+  :focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
 </style>
 </head>
 <body>
-<main>
-  <div class="kicker">Мастеровит · Портал</div>
-  <h1>Показ руководству</h1>
-  <p class="lead">Тридцать минут: два слайда и живая работа в портале.</p>
+<div class="app">
+  <header class="top" id="top"><span class="ic tint" id="topIc"></span><h1 id="title">Техкарта монтажника</h1>
+    <button class="chip" id="mode" hidden>Списком</button>
+    <button class="chip" id="size" aria-label="Размер шрифта">Аа</button>
+  </header>
+  <main id="view"></main>
+</div>
+<nav class="bar"><div class="bar-in">
+  <button id="bBack"><span style="font-size:1.5em;line-height:1">←</span>Назад</button>
+  <button id="bHome"><span style="font-size:1.4em;line-height:1">⌂</span>Домой</button>
+  <a class="callbtn" id="bCall" href="#"><span style="font-size:1.3em;line-height:1">📞</span>Бригадиру</a>
+</div></nav>
 
-  <div class="links">
-    <a class="card main" href="sufler.html">
-      <b>Суфлёр →</b>
-      <span>Ход показа, тезисы, цифры и реквизиты эталонов. Таймер на 30 минут.
-        Открывать на своём экране.</span>
-    </a>
-    <a class="card" href="pitch-2-slides.html">
-      <b>Два слайда →</b>
-      <span>Начало и финал. Между ними — портал на экране.</span>
-    </a>
+<script>
+/* ================= ТЕЛЕФОНЫ — заполнить ================= */
+const PHONES = { brigadir: '', office: '', sklad: '' };
+
+/* ================= ИКОНКИ ================= */
+const ICONS = {
+  doc: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6M10 17h6"/>',
+  users: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14c2.8 0 5 2.2 5 5"/>',
+  phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7"/><circle cx="12" cy="17" r=".6" fill="currentColor"/>',
+  alert: '<path d="M12 3l10 18H2z"/><path d="M12 10v5"/><circle cx="12" cy="18" r=".6" fill="currentColor"/>',
+  box: '<path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/>',
+  tool: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-2.5z"/>',
+  camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  fence: '<path d="M5 21V6l2-3 2 3v15M15 21V6l2-3 2 3v15"/><path d="M3 10h18M3 16h18"/>',
+  roof: '<path d="M3 11l9-6 9 6"/><path d="M6 10v10M18 10v10"/>',
+  check: '<path d="M5 12l5 5 9-10"/>',
+  step: '<circle cx="12" cy="12" r="9"/><path d="M8 12h8M13 9l3 3-3 3"/>',
+  sign: '<path d="M4 20h16"/><path d="M6 16l9-9 3 3-9 9H6z"/>',
+  home: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>'
+};
+const ico = (n, s) => `<svg width="${s || 24}" height="${s || 24}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[n] || ICONS.step}</svg>`;
+const CHEV = '<svg class="chev" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+const TODO = '<span class="todo">[уточнить]</span>';
+
+/* ================= СХЕМЫ (SVG) =================
+   Размеры, которых пока нет, показаны «?» — подставить нормы заказчика. */
+const T = (x, y, s, o) => `<text x="${x}" y="${y}" font-family="Inter,sans-serif" font-size="${(o && o.fs) || 13}" font-weight="${(o && o.fw) || 700}" fill="${(o && o.c) || '#141C2B'}" text-anchor="${(o && o.a) || 'start'}">${s}</text>`;
+const ARR = (x1, y1, x2, y2, c) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c || '#2B63C6'}" stroke-width="2" marker-start="url(#ar)" marker-end="url(#ar)"/>`;
+const DEFS = c => `<defs><marker id="ar" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c || '#2B63C6'}"/></marker>
+  <pattern id="earth" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#EFE3D0"/><path d="M0 10L10 0" stroke="#D8C3A3" stroke-width="1.5"/></pattern></defs>`;
+const SCHEMES = {
+  stolb: () => `<svg viewBox="0 0 320 210">${DEFS()}
+    <rect x="0" y="70" width="320" height="140" fill="url(#earth)"/>
+    <line x1="0" y1="70" x2="320" y2="70" stroke="#6B5434" stroke-width="3"/>
+    <rect x="125" y="70" width="70" height="105" fill="#C9CDD3"/>
+    <polygon points="125,70 150,62 170,62 195,70" fill="#C9CDD3"/>
+    <rect x="125" y="175" width="70" height="20" fill="#9AA0A8"/>
+    ${[135,150,165,180,142,158,173].map((x, i) => `<circle cx="${x}" cy="${i < 4 ? 181 : 189}" r="3" fill="#6E747C"/>`).join('')}
+    <rect x="150" y="8" width="20" height="164" fill="#2E3A4E"/>
+    ${ARR(222, 70, 222, 195)} ${T(230, 128, 'глубина ?')} ${T(230, 146, 'мм', { fs: 12, fw: 600, c: '#5B6578' })}
+    ${T(20, 125, 'бетон', { c: '#4A5568' })} <line x1="62" y1="121" x2="122" y2="121" stroke="#4A5568" stroke-width="1.5"/>
+    ${T(20, 192, 'щебень', { c: '#4A5568' })} <line x1="72" y1="188" x2="122" y2="186" stroke="#4A5568" stroke-width="1.5"/>
+    ${T(205, 52, 'уклон от столба', { fs: 12, c: '#4A5568' })} <line x1="203" y1="56" x2="185" y2="66" stroke="#4A5568" stroke-width="1.5"/>
+  </svg>`,
+  shag: () => `<svg viewBox="0 0 320 200">${DEFS()}
+    <rect x="0" y="168" width="320" height="32" fill="url(#earth)"/><line x1="0" y1="168" x2="320" y2="168" stroke="#6B5434" stroke-width="3"/>
+    <rect x="58" y="44" width="104" height="104" fill="#DCE6F5" stroke="#9DB3D6"/><rect x="168" y="44" width="104" height="104" fill="#DCE6F5" stroke="#9DB3D6"/>
+    <line x1="40" y1="64" x2="290" y2="64" stroke="#5B6578" stroke-width="4"/><line x1="40" y1="128" x2="290" y2="128" stroke="#5B6578" stroke-width="4"/>
+    ${[50, 160, 270].map(x => `<rect x="${x}" y="30" width="12" height="138" fill="#2E3A4E"/>`).join('')}
+    ${ARR(56, 18, 166, 18)} ${T(111, 13, 'шаг ? м', { a: 'middle' })}
+    ${ARR(220, 150, 220, 166, '#C93434')} ${T(228, 162, 'зазор ? мм', { c: '#C93434', fs: 12 })}
+    ${T(178, 98, 'полотно', { fs: 12, c: '#4A5568' })} ${T(292, 68, 'лаги', { fs: 11, c: '#4A5568' })}
+  </svg>`,
+  nahlest: () => `<svg viewBox="0 0 320 170">${DEFS()}
+    <polyline points="10,110 30,110 40,80 70,80 80,110 110,110 120,80 150,80 160,110 190,110" fill="none" stroke="#2B63C6" stroke-width="5"/>
+    <polyline points="150,72 160,102 190,102 200,72 230,72 240,102 270,102 280,72 310,72" fill="none" stroke="#7A4DC4" stroke-width="5"/>
+    <polyline points="120,72 150,72" fill="none" stroke="#7A4DC4" stroke-width="5"/>
+    ${ARR(120, 40, 160, 40)} ${T(140, 32, 'нахлёст: 1 волна', { a: 'middle' })}
+    ${[175, 255].map(x => `<line x1="${x}" y1="140" x2="${x}" y2="106" stroke="#1F8A4C" stroke-width="3" marker-end="url(#ar)"/>`).join('')}
+    ${T(160, 160, 'саморез — в нижнюю волну', { a: 'middle', c: '#1F8A4C' })}
+  </svg>`,
+  foto: () => `<svg viewBox="0 0 320 210">${DEFS()}
+    <rect x="40" y="20" width="240" height="150" fill="#F3F7EE" stroke="#9AA0A8" stroke-dasharray="5 4"/>
+    <rect x="130" y="45" width="60" height="45" fill="#D9DEE6" stroke="#5B6578"/>${T(160, 72, 'дом', { a: 'middle', fs: 12, c: '#4A5568' })}
+    <line x1="40" y1="170" x2="280" y2="170" stroke="#2E3A4E" stroke-width="6"/>${T(160, 162, 'забор', { a: 'middle', fs: 12, c: '#4A5568' })}
+    ${[[20, 195, 70, 150, 120, 175, '1'], [160, 202, 110, 172, 210, 172, '2'], [300, 195, 250, 150, 200, 175, '3']].map(([x, y, ax, ay, bx, by, n]) =>
+      `<polygon points="${x},${y} ${ax},${ay} ${bx},${by}" fill="rgba(31,138,76,.18)"/>
+       <circle cx="${x}" cy="${y}" r="12" fill="#1F8A4C"/>${T(x, y + 5, n, { a: 'middle', c: '#fff', fs: 14, fw: 800 })}`).join('')}
+  </svg>`,
+  vertGood: () => `<svg viewBox="0 0 140 150"><rect x="0" y="125" width="140" height="25" fill="#EFE3D0"/><rect x="62" y="10" width="16" height="118" fill="#2E3A4E"/>
+    <rect x="84" y="40" width="14" height="60" rx="3" fill="#F5D44A" stroke="#8a7a2a"/><circle cx="91" cy="70" r="4" fill="#1F8A4C"/>
+    <line x1="84" y1="70" x2="98" y2="70" stroke="#8a7a2a"/></svg>`,
+  vertBad: () => `<svg viewBox="0 0 140 150"><rect x="0" y="125" width="140" height="25" fill="#EFE3D0"/><rect x="62" y="10" width="16" height="118" fill="#2E3A4E" transform="rotate(9 70 125)"/>
+    <rect x="90" y="40" width="14" height="60" rx="3" fill="#F5D44A" stroke="#8a7a2a" transform="rotate(9 70 125)"/><circle cx="97" cy="50" r="4" fill="#C93434" transform="rotate(9 70 125)"/></svg>`,
+  screwGood: () => `<svg viewBox="0 0 140 150"><path d="M10 100 H130" stroke="#2B63C6" stroke-width="6"/><rect x="52" y="78" width="36" height="9" rx="4" fill="#3A3F48"/>
+    <rect x="50" y="87" width="40" height="8" rx="3" fill="#1F1F1F"/><rect x="66" y="40" width="8" height="38" fill="#9AA0A8"/>${''}</svg>`,
+  screwBad: () => `<svg viewBox="0 0 140 150"><path d="M10 100 H52 Q70 112 88 100 H130" stroke="#2B63C6" stroke-width="6" fill="none"/>
+    <rect x="44" y="92" width="52" height="5" rx="2" fill="#1F1F1F"/><rect x="52" y="84" width="36" height="9" rx="4" fill="#3A3F48"/><rect x="66" y="46" width="8" height="38" fill="#9AA0A8"/></svg>`
+};
+const GOODBAD = {
+  vertical: ['vertGood', 'vertBad', 'Ровно по уровню', 'Завален'],
+  screw: ['screwGood', 'screwBad', 'Шайба прижата', 'Пережат — лист помят']
+};
+
+/* ================= СОДЕРЖИМОЕ =================
+   Узел-меню: { id, title, sub, icon, children }
+   Лист: type 'steps' (пошагово, по одному шагу на экран) | 'cards' | 'faq' | 'contacts'
+   Шаг: { t — короткая команда, d — подробнее, norm, scheme, goodbad } */
+function fenceStages(kind, canvasSteps) {
+  return [
+    { id: 'razmetka', title: 'Разметка', sub: 'Границы, углы, места столбов', icon: 'step', type: 'steps', steps: [
+      { t: 'Сверь эскиз замера с участком', d: 'Длины пролётов, места ворот и калитки, перепады высот.' },
+      { t: 'Покажи клиенту границы', d: 'Межевые знаки или согласованная линия. Спорное место — только со слов клиента и с фото.' },
+      { t: 'Натяни шнур по линии забора', d: 'От угла к углу, на высоте 10–20 см от земли.' },
+      { t: 'Разметь места столбов', d: 'Колышки по шагу. Ворота и калитку — по размеру проёма.', norm: 'Шаг столбов: ' + TODO, scheme: 'shag' },
+    ]},
+    { id: 'stolby', title: 'Столбы', sub: 'Выбери способ установки', icon: 'fence', children: [
+      { id: 'svai', title: 'Винтовые сваи', sub: 'Вкрутить + оголовок', icon: 'step', type: 'steps', steps: [
+        { t: 'Проверь сваи по накладной', d: 'Диаметр, длина, количество, оголовки.' },
+        { t: 'Вкрути сваю ровно', d: 'Держи вертикаль по уровню с двух сторон всё время вкручивания.', norm: 'Глубина: ' + TODO, goodbad: 'vertical' },
+        { t: 'Выставь высоту по шнуру', d: 'Верх свай в одну линию или ступенями на перепаде.' },
+        { t: 'Поставь столб на оголовок', d: 'Сварка или болты, ещё раз проверь вертикаль.', goodbad: 'vertical' },
+      ]},
+      { id: 'beton', title: 'Бетонирование', sub: 'Бурение + бетон', icon: 'step', type: 'steps', steps: [
+        { t: 'Пробури яму под столб', d: 'Диаметр и глубина — по грунту.', norm: 'Глубина / диаметр: ' + TODO, scheme: 'stolb' },
+        { t: 'Засыпь щебень на дно', d: 'Щебень или ПГС, утрамбуй.', scheme: 'stolb' },
+        { t: 'Поставь столб ровно', d: 'Временные подпорки, проверка уровнем с двух сторон.', goodbad: 'vertical' },
+        { t: 'Залей бетон', d: 'Проштыкуй. Верх — с уклоном от столба, чтобы стекала вода.', scheme: 'stolb' },
+        { t: 'Дай бетону схватиться', d: 'Не вешай лаги раньше срока.', norm: 'Выдержка: ' + TODO },
+      ]},
+      { id: 'zabivka', title: 'Забивка', sub: 'Для подходящего грунта', icon: 'step', type: 'steps', steps: [
+        { t: 'Проверь грунт', d: 'Камни, глина, вода близко — звони бригадиру.' },
+        { t: 'Забей столб по отметке', d: 'Через насадку, не мни верх.', norm: 'Глубина: ' + TODO },
+        { t: 'Проверь уровень и высоту', d: 'По уровню и по шнуру.', goodbad: 'vertical' },
+      ]},
+    ]},
+    { id: 'lagi', title: 'Лаги', sub: 'Поперечины под полотно', icon: 'step', type: 'steps', steps: [
+      { t: 'Разметь высоту лаг на столбах', d: 'Отступ от земли и от верха.', norm: 'Рядов лаг: ' + TODO, scheme: 'shag' },
+      { t: 'Закрепи лаги', d: 'Сварка, кронштейны или саморезы — по комплекту.' },
+      { t: 'Закрась сварку', d: 'Очисти и закрась грунт-эмалью в цвет.' },
+    ]},
+    { id: 'polotno', title: 'Полотно: ' + kind, sub: 'Монтаж заполнения', icon: 'fence', type: 'steps', steps: canvasSteps },
+    { id: 'vorota', title: 'Ворота и калитка', sub: 'Если есть в заказе', icon: 'fence', children: [
+      { id: 'raspash', title: 'Распашные ворота', icon: 'step', type: 'steps', steps: [
+        { t: 'Навесь створки', d: 'Петли по разметке, зазор до земли.', norm: 'Зазор до земли: ' + TODO },
+        { t: 'Отрегулируй створки', d: 'Закрываются без усилия, не цепляют землю.' },
+        { t: 'Поставь запор и упоры', d: 'Нижний шпингалет, упор в открытом положении.' },
+      ]},
+      { id: 'otkat', title: 'Откатные ворота', icon: 'step', type: 'steps', steps: [
+        { t: 'Проверь закладную', d: 'Уровень и размеры под балку. ' + TODO },
+        { t: 'Поставь ролики и балку', d: 'По уровню, без перекоса.' },
+        { t: 'Поставь улавливатели', d: 'Ворота заходят в улавливатель без удара.' },
+        { t: 'Открой-закрой 5 раз', d: 'Без заеданий и ударов.' },
+      ]},
+      { id: 'kalitka', title: 'Калитка', icon: 'step', type: 'steps', steps: [
+        { t: 'Навесь калитку', d: 'По уровню, зазоры одинаковые.' },
+        { t: 'Поставь замок и ручки', d: 'Проверь ключом при клиенте.' },
+      ]},
+    ]},
+    { id: 'uborka', title: 'Уборка', sub: 'Перед сдачей', icon: 'check', type: 'steps', steps: [
+      { t: 'Собери обрезки и упаковку', d: 'Пройди магнитом вдоль забора: саморезы опасны для колёс и газонокосилки.' },
+      { t: 'Остатки материала', d: 'Смотри раздел «Остался материал».' },
+    ]},
+  ];
+}
+
+const DATA = { id: 'root', title: 'Техкарта монтажника', icon: 'home', children: [
+
+  { id: 'docs', c: 'docs', title: 'Документы', sub: 'Что взять, что оформить', icon: 'doc', children: [
+    { id: 'docs-take', title: 'Взять с собой', icon: 'check', type: 'cards', cards: [
+      { h: 'Список', p: '<ul><li>Заказ / договор (копия)</li><li>Эскиз замера и спецификация</li><li>Акт выполненных работ — 2 экз.</li><li>Доверенность, если нужна</li><li>Паспорт</li></ul>' },
+    ]},
+    { id: 'docs-fill', title: 'Что оформить на объекте', icon: 'sign', type: 'cards', cards: [
+      { h: 'Акт выполненных работ', p: 'После обхода с клиентом. Замечания — письменно в акте, не на словах. ' + TODO },
+      { h: 'Оплата', p: 'Кто и как принимает остаток оплаты, какой документ выдаётся. ' + TODO },
+      { h: 'Фото документов', p: 'Подписанный акт сфотографируй и загрузи в приложение прямо на объекте.' },
+    ]},
+  ]},
+
+  { id: 'clients', c: 'clients', title: 'Физлица и юрлица', sub: 'Кто подписывает, доверенности', icon: 'users', children: [
+    { id: 'fiz', title: 'Физическое лицо', icon: 'users', type: 'cards', cards: [
+      { h: 'Кто подписывает акт', p: 'Заказчик по договору. Если на объекте другой человек — доверенность или звонок заказчику. ' + TODO },
+      { h: 'Оплата', p: TODO },
+    ]},
+    { id: 'yur', title: 'Юридическое лицо', icon: 'doc', type: 'cards', cards: [
+      { h: 'Кто подписывает', p: 'Директор или представитель по доверенности. Проверь паспорт и доверенность.' },
+      { h: 'Документы', p: 'Акт, при необходимости УПД / накладная, печать организации. ' + TODO },
+    ]},
+    { id: 'dover', title: 'Доверенности', icon: 'sign', type: 'cards', cards: [
+      { h: 'Когда нужна', p: 'Подписывает не заказчик; получение материала на складе; приём денег. ' + TODO },
+      { h: 'Что проверить', p: '<ul><li>ФИО и паспорт — того, кто на объекте</li><li>Срок действия</li><li>Подпись и печать (у юрлица)</li><li>Право подписать акт</li></ul>' },
+      { h: 'Образец', p: 'Файл образца доверенности. ' + TODO },
+    ]},
+  ]},
+
+  { id: 'contacts', c: 'contacts', title: 'Куда звонить', sub: 'Бригадир, офис, склад', icon: 'phone', type: 'contacts', contacts: [
+    { who: 'Бригадир', when: 'Любой вопрос по объекту, конфликт с клиентом', tel: () => PHONES.brigadir },
+    { who: 'Офис / менеджер заказа', when: 'Изменения в заказе, оплата, документы', tel: () => PHONES.office },
+    { who: 'Склад', when: 'Не хватает материала, брак, остатки', tel: () => PHONES.sklad },
+    { who: 'Экстренно', when: 'Травма, повредили газ, свет, воду', tel: () => '112' },
+  ]},
+
+  { id: 'faq', c: 'faq', title: 'Частые вопросы', sub: 'Что делать, если…', icon: 'help', type: 'faq', faq: [
+    { q: 'Размеры не совпадают с замером', a: 'Не начинай «примерно». Сфотографируй и позвони бригадиру и менеджеру заказа.' },
+    { q: 'Клиента нет на месте', a: 'Позвони клиенту, потом менеджеру. Без клиента — только если договорились заранее. ' + TODO },
+    { q: 'Не хватает материала', a: 'Пересчитай, сфотографируй, позвони на склад и бригадиру. Своим материалом не заменяй.' },
+    { q: 'Материал с браком', a: 'Не ставь. Сфотографируй брак и маркировку, позвони на склад.' },
+    { q: 'Грунт не даёт (камни, вода, плывун)', a: 'Остановись на этом столбе, фото, звонок бригадиру — может, сменим способ установки.' },
+    { q: 'Под землёй трубы или кабель', a: 'Остановись. Спроси у клиента, где коммуникации. Повредили — звони бригадиру и 112.' },
+    { q: 'Дождь, мороз', a: 'Сварка и бетон под дождём — нельзя. Перенос — с бригадиром. ' + TODO },
+  ]},
+
+  { id: 'conflict', c: 'conflict', title: 'Клиент недоволен', sub: 'Как себя вести', icon: 'alert', type: 'steps', steps: [
+    { t: 'Выслушай, не перебивай', d: 'Не спорь и не оправдывайся. Задача — понять, что не так.' },
+    { t: 'Спроси, что конкретно не так', d: 'Пусть покажет на месте: какой узел, какой размер, что он ждал.' },
+    { t: 'Сфотографируй спорное место', d: 'С разных сторон, с рулеткой или уровнем в кадре.' },
+    { t: 'Ничего не обещай от себя', d: 'Скидки, переделки, сроки решает бригадир или менеджер.' },
+    { t: 'Позвони бригадиру', d: 'При клиенте или сразу после. Кнопка «Бригадиру» внизу экрана.' },
+    { t: 'Запиши замечание в акт', d: 'Отказывается подписывать — сообщи бригадиру. Молча не уезжай.' },
+  ]},
+
+  { id: 'ostatki', c: 'ostatki', title: 'Остался материал', sub: 'Что делать с остатками', icon: 'box', type: 'steps', steps: [
+    { t: 'Пересчитай остатки', d: 'Профиль, лаги, столбы, крепёж — по позициям.' },
+    { t: 'Сфотографируй', d: 'Все остатки одним кадром и крупно маркировку.' },
+    { t: 'Сообщи бригадиру или на склад', d: 'Сколько и в каком состоянии.' },
+    { t: 'Вернуть на склад или оставить?', d: 'Оставить клиенту — только если согласовано. ' + TODO },
+  ]},
+
+  { id: 'install', c: 'install', title: 'Установка', sub: 'Забор или навес', icon: 'tool', children: [
+    { id: 'zabor', title: 'Забор', sub: 'Выбери вид забора', icon: 'fence', children: [
+      { id: 'proflist', title: 'Профнастил', icon: 'fence', children: fenceStages('профнастил', [
+        { t: 'Первый лист — строго по уровню', d: 'От угла или столба. От него зависит весь пролёт.', goodbad: 'vertical' },
+        { t: 'Нахлёст — одна волна', d: 'Нахлёст от ветра / от фасада. ' + TODO, scheme: 'nahlest' },
+        { t: 'Саморез — в нижнюю волну', d: 'Кровельный саморез с шайбой, не пережимай.', norm: 'Саморезов на лист: ' + TODO, goodbad: 'screw' },
+        { t: 'Сними плёнку сразу', d: 'На солнце плёнка прикипает — потом не снимешь.' },
+        { t: 'Проверь верх по шнуру', d: 'Ровная линия; заглушки на столбы.' },
+      ])},
+      { id: 'shtaketnik', title: 'Евроштакетник', icon: 'fence', children: fenceStages('евроштакетник', [
+        { t: 'Сделай шаблон зазора', d: 'Обрезок нужной ширины — все зазоры одинаковые.', norm: 'Зазор: ' + TODO },
+        { t: 'Одна сторона или шахматка', d: 'По заказу.' },
+        { t: '2 самореза на каждую лагу', d: 'По одной линии, саморезы в цвет.', goodbad: 'screw' },
+        { t: 'Проверь верх', d: 'Ровно по шнуру или фигурно по эскизу.' },
+      ])},
+      { id: 'rabica', title: 'Сетка рабица', icon: 'fence', children: fenceStages('сетка рабица', [
+        { t: 'Закрепи начало рулона', d: 'Пруток через ячейки, к первому столбу.' },
+        { t: 'Натяни сетку', d: 'Без провисов, прутом или лебёдкой.' },
+        { t: 'Закрепи на столбах', d: 'Крючки или проволока.' },
+        { t: 'Протяни проволоку верх и низ', d: 'Чтобы не провисла со временем.' },
+      ])},
+      { id: 'setka3d', title: '3D-сетка', icon: 'fence', children: fenceStages('3D-сетка', [
+        { t: 'Поставь крепёж на столбы', d: 'Хомуты или скобы по высоте панели.' },
+        { t: 'Навесь панели', d: 'Рёбра в одну сторону, зазор до земли.', norm: 'Зазор до земли: ' + TODO, scheme: 'shag' },
+        { t: 'Затяни крепёж', d: 'Панели не болтаются, линия ровная.' },
+      ])},
+      { id: 'jaluzi', title: 'Жалюзи', icon: 'fence', children: fenceStages('жалюзи', [
+        { t: 'Поставь направляющие ровно', d: 'Строго вертикально, по шаблону.', goodbad: 'vertical' },
+        { t: 'Набери ламели', d: 'Снизу вверх, один угол у всех.' },
+        { t: 'Закрой верхней планкой', d: 'Проверь, что ламели не гуляют.' },
+      ])},
+      { id: 'rancho', title: 'Ранчо', icon: 'fence', children: fenceStages('ранчо', [
+        { t: 'Разметь доски', d: 'Одинаковые зазоры по шаблону.', norm: 'Зазор: ' + TODO },
+        { t: 'Крепи доски к столбам', d: 'Стыки — только на столбе.' },
+        { t: 'Проверь горизонт', d: 'Уровнем по всей длине.' },
+      ])},
+    ]},
+    { id: 'naves', title: 'Навес', sub: 'Опоры, фермы, кровля', icon: 'roof', children: [
+      { id: 'n-opory', title: 'Опоры', icon: 'step', type: 'steps', steps: [
+        { t: 'Разметь опоры', d: 'Диагонали равны — проверь рулеткой.' },
+        { t: 'Поставь опоры ровно', d: 'Сваи или бетон, вертикаль по уровню. ' + TODO, goodbad: 'vertical' },
+      ]},
+      { id: 'n-fermy', title: 'Фермы и обвязка', icon: 'step', type: 'steps', steps: [
+        { t: 'Свари обвязку по верху', d: 'Проверь горизонт и диагонали.' },
+        { t: 'Поставь фермы', d: 'Шаг по проекту, уклон для стока воды.', norm: 'Шаг ферм / уклон: ' + TODO },
+        { t: 'Закрась сварку', d: 'Грунт-эмаль в цвет.' },
+      ]},
+      { id: 'n-krovlya', title: 'Кровля', icon: 'roof', type: 'steps', steps: [
+        { t: 'Уложи кровлю', d: 'Поликарбонат или профнастил — по заказу. ' + TODO },
+        { t: 'Поставь торцевые планки', d: 'Без щелей.' },
+        { t: 'Водосток, если есть в заказе', d: 'Уклон к сливу, проверь водой.' },
+      ]},
+    ]},
+  ]},
+
+  { id: 'after', c: 'after', title: 'После установки', sub: 'Фото, сдача, акт', icon: 'camera', children: [
+    { id: 'photo', title: 'Как делать фото', sub: 'Обязательные кадры', icon: 'camera', type: 'steps', steps: [
+      { t: 'Весь забор с трёх точек', d: 'С двух концов и по центру — чтобы был виден весь объект.', scheme: 'foto' },
+      { t: 'Ворота и калитка', d: 'Закрытые и открытые.' },
+      { t: 'Узлы крупно', d: 'Крепление лаг, верх столбов, сварка после покраски.' },
+      { t: 'Уровень на столбе', d: 'Пузырёк уровня в кадре, на 2–3 столбах.', goodbad: 'vertical' },
+      { t: 'Чистый участок', d: 'После уборки, без мусора.' },
+      { t: 'Подписанный акт', d: 'Целиком, текст читается.' },
+    ]},
+    { id: 'handover', title: 'Сдача клиенту', icon: 'sign', type: 'steps', steps: [
+      { t: 'Обойди объект с клиентом', d: 'Покажи ворота, калитку, замки, отдай ключи.' },
+      { t: 'Расскажи про уход', d: 'Смазка петель и роликов, подкраска царапин. ' + TODO },
+      { t: 'Подпишите акт', d: 'Замечания — письменно в акте.' },
+      { t: 'Загрузи фото и акт', d: 'В приложение, до отъезда с объекта.' },
+    ]},
+  ]},
+]};
+
+/* ================= НАВИГАЦИЯ ================= */
+function walk(node, path, fn) { fn(node, path); (node.children || []).forEach(c => walk(c, path.concat(c), fn)); }
+const byPath = {};
+walk(DATA, [], (n, p) => { byPath[p.map(x => x.id).join('/')] = { node: n, path: p }; });
+
+const view = document.getElementById('view'), titleEl = document.getElementById('title'), top_ = document.getElementById('top'),
+      topIc = document.getElementById('topIc'), modeBtn = document.getElementById('mode');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const plain = s => String(s || '').replace(/<[^>]+>/g, ' ').replace(/\[уточнить\]/g, '').replace(/\s+/g, ' ').trim();
+
+let slide = 0, listMode = false, lastPath = null;
+function current() { return decodeURIComponent(location.hash.replace(/^#\/?/, '')); }
+function go(p) { location.hash = p ? '#/' + p : '#/'; }
+
+function render() {
+  const pathStr = current();
+  const hit = byPath[pathStr] || byPath[''];
+  const node = hit.node, path = hit.path;
+  if (pathStr !== lastPath) { slide = 0; listMode = false; lastPath = pathStr; stopSpeak(); }
+  const section = path[0] ? path[0].c : '';
+  top_.dataset.c = section; document.body.dataset.c = section;
+  topIc.innerHTML = ico((path[path.length - 1] || DATA).icon);
+  titleEl.textContent = node.title;
+  modeBtn.hidden = node.type !== 'steps';
+  modeBtn.textContent = listMode ? 'По шагам' : 'Списком';
+  document.getElementById('bBack').disabled = path.length === 0;
+  document.getElementById('bHome').disabled = path.length === 0;
+
+  let html = '';
+  if (path.length === 0) html = renderHome();
+  else if (!node.type) html = renderList(node, pathStr);
+  else if (node.type === 'steps') html = listMode ? renderStepList(node) : renderSlide(node);
+  else if (node.type === 'cards') html = node.cards.map(c => `<div class="card"><h3>${esc(c.h)}</h3><div>${c.p}</div></div>`).join('');
+  else if (node.type === 'faq') html = node.faq.map(f => `<details class="faq"><summary>${esc(f.q)}</summary><div>${f.a}</div></details>`).join('');
+  else if (node.type === 'contacts') html = node.contacts.map(c => {
+    const tel = c.tel();
+    return `<div class="card contact"><b>${esc(c.who)}</b><small>${esc(c.when)}</small>
+      ${tel ? `<a class="call" href="tel:${esc(tel)}">${ico('phone', 22)} Позвонить ${esc(tel)}</a>` : `<span class="call none">Номер ${TODO}</span>`}</div>`;
+  }).join('');
+  view.innerHTML = html;
+  window.scrollTo(0, 0);
+}
+
+function bigBtn(c, p, i) {
+  return `<button class="big" data-go="${p}" ${c.c ? `data-c="${c.c}"` : ''}><span class="ic tint">${ico(c.icon, 28)}</span>
+    <span class="tx"><b>${i != null ? (i + 1) + '. ' : ''}${esc(c.title)}</b>${c.sub ? `<small>${esc(c.sub)}</small>` : ''}</span>${CHEV}</button>`;
+}
+
+function renderHome() {
+  return `<input class="search" id="q" type="search" placeholder="Поиск: бетон, доверенность, фото…" autocomplete="off">
+    <div class="list" id="tiles">${DATA.children.map((c, i) => bigBtn(c, c.id, i)).join('')}</div>
+    <div id="results"></div>
+    <details class="client-note"><summary>Для заказчика: что нужно, чтобы наполнить ▾</summary><div>
+      Это черновик структуры. Пункты <b>[уточнить]</b> заполняются по вашим данным:
+      <ul>
+        <li><b>Короткие видео (10–30 секунд) или фото по каждому шагу монтажа — с ваших объектов.</b> Монтажникам проще посмотреть, чем читать: видео или фото встанут на место рисунков и оранжевых заглушек «здесь будет фото».</li>
+        <li><b>Фото «правильно / неправильно»</b> по частым ошибкам: кривой столб, пережатый саморез, неровный верх и т. п.</li>
+        <li>Телефоны: бригадир, офис, склад.</li>
+        <li>Нормы: шаг столбов, глубина, зазоры, количество саморезов, выдержка бетона.</li>
+        <li>Порядок оплаты на объекте и правила по остаткам материала.</li>
+        <li>Образец доверенности.</li>
+      </ul></div></details>`;
+}
+
+function renderList(node, pathStr) {
+  return `<div class="list">${node.children.map(c => bigBtn(c, pathStr + '/' + c.id)).join('')}</div>`;
+}
+
+function visualOf(s) {
+  if (s.scheme && SCHEMES[s.scheme]) return `<div class="visual">${SCHEMES[s.scheme]()}</div>`;
+  if (s.goodbad && GOODBAD[s.goodbad]) {
+    const [g, b, gt, bt] = GOODBAD[s.goodbad];
+    return `<div class="visual"><div class="gb"><div class="g">${SCHEMES[g]()}✓ ${gt}</div><div class="b">${SCHEMES[b]()}✗ ${bt}</div></div></div>`;
+  }
+  return `<div class="visual"><div class="ph">${ico('camera', 40)}Здесь будет фото или видео 10–30 сек.<br>Нужно от заказчика.</div></div>`;
+}
+
+function renderSlide(node) {
+  const n = node.steps.length, s = node.steps[slide];
+  const dots = node.steps.map((x, i) => `<i class="${i === slide ? 'on' : ''}"></i>`).join('');
+  const canSpeak = 'speechSynthesis' in window;
+  return `<div id="slide">
+    <div class="counter"><span>Шаг ${slide + 1} из ${n}</span><span class="dots">${dots}</span></div>
+    ${visualOf(s)}
+    <h2 class="cmd">${esc(s.t)}</h2>
+    ${s.norm ? `<div class="norm">${s.norm}</div>` : ''}
+    <div class="row">${canSpeak ? `<button class="act" data-speak="1">🔊 Прослушать</button>` : ''}</div>
+    ${s.d ? `<details class="more"><summary>Подробнее</summary><div>${s.d}</div></details>` : ''}
   </div>
+  <div class="stepnav">
+    <button class="nav" data-prev="1" ${slide === 0 ? 'disabled' : ''}>← Назад</button>
+    <button class="nav main" data-next="1">${slide === n - 1 ? 'Готово ✓' : 'Дальше →'}</button>
+  </div>`;
+}
 
-  <p class="note">
-    На телефоне листать смахиванием или кнопкой «Дальше».
-    Пробел и стрелки — на компьютере. Место сохраняется само.
-  </p>
-</main>
+function renderStepList(node) {
+  return `<ol class="steps">${node.steps.map((s, i) => `<li data-slide="${i}"><span class="n tint">${i + 1}</span><span><b>${esc(s.t)}</b>${s.d ? `<small>${s.d}</small>` : ''}</span></li>`).join('')}</ol>`;
+}
+
+function searchAll(q) {
+  q = q.trim().toLowerCase();
+  const res = document.getElementById('results'), tiles = document.getElementById('tiles');
+  if (!q) { res.innerHTML = ''; tiles.style.display = ''; return; }
+  tiles.style.display = 'none';
+  const out = [];
+  Object.keys(byPath).forEach(k => {
+    if (!k) return;
+    const { node, path } = byPath[k];
+    const text = [node.title, node.sub, ...(node.steps || []).map(s => s.t + ' ' + plain(s.d)), ...(node.cards || []).map(c => c.h + ' ' + plain(c.p)),
+                  ...(node.faq || []).map(f => f.q + ' ' + plain(f.a))].join(' ').toLowerCase();
+    if (text.includes(q)) out.push({ k, node, path });
+  });
+  res.innerHTML = out.length ? '<div class="list">' + out.slice(0, 30).map(r => `<button class="big" data-go="${r.k}" data-c="${r.path[0].c || ''}"><span class="ic tint">${ico(r.node.icon, 26)}</span>
+      <span class="tx"><b>${esc(r.node.title)}</b><small>${esc(r.path.slice(0, -1).map(n => n.title).join(' › '))}</small></span>${CHEV}</button>`).join('') + '</div>'
+    : '<div class="empty">Ничего не найдено</div>';
+}
+
+/* ================= ОЗВУЧКА ================= */
+function stopSpeak() { try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {} }
+function speakStep() {
+  const node = byPath[current()].node, s = node.steps[slide];
+  const text = [s.t, plain(s.norm), plain(s.d)].filter(Boolean).join('. ');
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text); u.lang = 'ru-RU'; u.rate = 0.95;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+/* ================= СОБЫТИЯ ================= */
+function stepTo(d) {
+  const node = byPath[current()].node;
+  if (d > 0 && slide === node.steps.length - 1) { const p = current().split('/'); p.pop(); go(p.join('/')); return; }
+  slide = Math.max(0, Math.min(node.steps.length - 1, slide + d)); stopSpeak(); render();
+}
+document.addEventListener('click', e => {
+  const t = e.target;
+  const g = t.closest('[data-go]'); if (g) { go(g.dataset.go); return; }
+  if (t.closest('[data-next]')) { stepTo(1); return; }
+  if (t.closest('[data-prev]')) { stepTo(-1); return; }
+  if (t.closest('[data-speak]')) { speakStep(); return; }
+  const li = t.closest('[data-slide]'); if (li) { slide = +li.dataset.slide; listMode = false; render(); }
+});
+document.addEventListener('input', e => { if (e.target.id === 'q') searchAll(e.target.value); });
+modeBtn.addEventListener('click', () => { listMode = !listMode; render(); });
+document.getElementById('bBack').addEventListener('click', () => { const p = current().split('/'); p.pop(); go(p.join('/')); });
+document.getElementById('bHome').addEventListener('click', () => go(''));
+document.getElementById('bCall').addEventListener('click', e => {
+  if (PHONES.brigadir) { e.currentTarget.href = 'tel:' + PHONES.brigadir; return; }
+  e.preventDefault(); alert('Номер бригадира пока не указан.');
+});
+// свайп по шагу: влево — дальше, вправо — назад
+let sx = null, sy = null;
+document.addEventListener('touchstart', e => { if (e.target.closest('#slide')) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; } else sx = null; }, { passive: true });
+document.addEventListener('touchend', e => {
+  if (sx == null) return;
+  const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
+  if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) stepTo(dx < 0 ? 1 : -1);
+}, { passive: true });
+// крупный шрифт
+const sizeBtn = document.getElementById('size');
+try { if (localStorage.getItem('tehkarta_size') === 'l') document.documentElement.dataset.size = 'l'; } catch (e) {}
+sizeBtn.addEventListener('click', () => {
+  const big = document.documentElement.dataset.size === 'l';
+  if (big) delete document.documentElement.dataset.size; else document.documentElement.dataset.size = 'l';
+  try { localStorage.setItem('tehkarta_size', big ? '' : 'l'); } catch (e) {}
+});
+window.addEventListener('hashchange', render);
+render();
+</script>
 </body>
 </html>
